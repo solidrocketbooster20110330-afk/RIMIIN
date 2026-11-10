@@ -44,12 +44,15 @@ export default function HomePage() {
         supabase!.from("transactions").select("id,transaction_date,kind,amount,reason").order("transaction_date", { ascending: false }).limit(5)
       ]);
       if (!active) return;
-      if (!entryRes.error && entryRes.data?.length) {
-        setEntries(entryRes.data as Entry[]);
-        setBalance(entryRes.data[0].balance);
+      if (!entryRes.error) {
+        const savedEntries = (entryRes.data ?? []) as Entry[];
+        setEntries(savedEntries);
+        setBalance(savedEntries[0]?.balance ?? 0);
       }
-      if (!goalRes.error && goalRes.data?.length) setGoal(goalRes.data[0] as Goal);
-      if (!txRes.error && txRes.data) setTransactions(txRes.data as Transaction[]);
+      if (!goalRes.error) {
+        setGoal(goalRes.data?.[0] as Goal ?? { id: "new", card_name: "목표를 등록해 주세요", target_amount: 60000, deadline: null, priority: 1 });
+      }
+      if (!txRes.error) setTransactions((txRes.data ?? []) as Transaction[]);
       setConnected(!entryRes.error && !goalRes.error && !txRes.error);
       setLoading(false);
     }
