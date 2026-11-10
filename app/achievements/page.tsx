@@ -1,0 +1,27 @@
+"use client";
+import Link from "next/link";
+import {useEffect,useMemo,useState} from "react";
+import {ArrowLeft,CalendarDays,ChartNoAxesCombined,Gem,Trophy,TrendingDown,TrendingUp} from "lucide-react";
+import {getGoalProgress,readData,type GoalAchievement,type CrystalEntry,type CrystalTransaction,type CrystalGoal} from "@/lib/local-data";
+const fmt=(n:number)=>new Intl.NumberFormat("ko-KR").format(n);
+type TimelineItem={id:string;date:string;title:string;detail:string;kind:"achievement"|"gain"|"spend"|"balance"};
+export default function AchievementsPage(){
+ const [achievements,setAchievements]=useState<GoalAchievement[]>([]);const [entries,setEntries]=useState<CrystalEntry[]>([]);const [transactions,setTransactions]=useState<CrystalTransaction[]>([]);const [goals,setGoals]=useState<CrystalGoal[]>([]);
+ useEffect(()=>{const d=readData();setAchievements(d.achievements);setEntries(d.entries);setTransactions(d.transactions);setGoals(d.goals);},[]);
+ const totals=useMemo(()=>({gained:transactions.filter(t=>t.kind==="gain").reduce((s,t)=>s+t.amount,0),spent:transactions.filter(t=>t.kind==="spend").reduce((s,t)=>s+t.amount,0),balance:[...entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0]?.balance??0}),[transactions,entries]);
+ const progress=getGoalProgress(goals,totals.balance);const target=goals.reduce((s,g)=>s+g.target_amount,0);const allocated=progress.reduce((s,p)=>s+p.allocated,0);const percent=target>0?Math.round(allocated/target*100):0;
+ const timeline:TimelineItem[]=[
+ ...achievements.map(a=>({id:"a-"+a.id,date:a.achieved_date,title:"목표 달성: "+a.goal_name,detail:fmt(a.target_amount)+" 크리스탈 목표를 달성했어요!",kind:"achievement" as const})),
+ ...transactions.map(t=>({id:"t-"+t.id,date:t.transaction_date,title:t.kind==="gain"?"크리스탈 획득":"크리스탈 사용",detail:(t.kind==="gain"?"+":"−")+fmt(t.amount)+(t.reason?" · "+t.reason:""),kind:t.kind as "gain"|"spend"})),
+ ...entries.map(e=>({id:"e-"+e.id,date:e.entry_date,title:"보유량 기록",detail:fmt(e.balance)+" 크리스탈"+(e.memo?" · "+e.memo:""),kind:"balance" as const}))
+ ].sort((a,b)=>b.date.localeCompare(a.date));
+ return <main className="page-wrap"><div className="shell"><header className="topbar"><Link href="/" className="brand"><span className="brand-mark"><Gem size={20}/></span><span>RIMIIN<small>CRYSTAL PLANNER</small></span></Link><Link href="/" className="pill"><ArrowLeft size={13}/> 홈</Link></header><section className="subpage"><h1>My Achievements</h1><p className="muted">모아 온 크리스탈과 달성한 목표를 한곳에서 확인해요.</p>
+ <div className="grid stats" style={{marginTop:20}}><section className="card stat"><div className="stat-icon" style={{background:"#eee8ff",color:"#8a70d1"}}><Trophy size={16}/></div><div className="stat-label">달성한 목표</div><div className="stat-value">{achievements.length}개</div><div className="stat-foot">완료 후에도 기록은 유지돼요</div></section><section className="card stat"><div className="stat-icon" style={{background:"#e5f4ff",color:"#6d9ed2"}}><TrendingUp size={16}/></div><div className="stat-label">누적 획득</div><div className="stat-value">{fmt(totals.gained)}</div><div className="stat-foot">획득 내역 합계</div></section><section className="card stat"><div className="stat-icon" style={{background:"#ffeaf2",color:"#d98bab"}}><TrendingDown size={16}/></div><div className="stat-label">누적 사용</div><div className="stat-value">{fmt(totals.spent)}</div><div className="stat-foot">사용 내역 합계</div></section></div>
+ <section className="card panel" style={{marginTop:16}}><div className="panel-title"><h3>현재 전체 목표 진행률</h3><strong>{percent}%</strong></div><div className="progress"><span style={{width:percent+"%"}}/></div><div className="goal-numbers"><span>{fmt(allocated)} / {fmt(target)} crystals</span><b>현재 보유량 {fmt(totals.balance)}</b></div></section>
+ <div className="section-head"><div><h2><Trophy size={18} style={{display:"inline",verticalAlign:"-3px",marginRight:6}}/>달성한 목표</h2><p>한 번 달성한 목표는 이후 보유량이 줄어도 남아요.</p></div><Link href="/goals" className="pill">목표 관리</Link></div>
+ {achievements.length?<div className="grid" style={{gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))"}}>{[...achievements].sort((a,b)=>b.achieved_date.localeCompare(a.achieved_date)).map(a=><article className="card panel" key={a.id}><div className="goal-art"><Trophy/></div><h3>{a.goal_name}</h3><div className="stat-value">{fmt(a.target_amount)} 💎</div><p className="muted"><CalendarDays size={13} style={{display:"inline",verticalAlign:"-2px",marginRight:5}}/>{a.achieved_date} 달성</p></article>)}</div>:<div className="card empty">아직 달성 기록이 없어요. 목표를 달성하면 이곳에 자동으로 저장돼요.</div>}
+ <div className="section-head"><div><h2>Activity Timeline</h2><p>보유량 기록과 크리스탈 획득·사용 내역</p></div></div>
+ {timeline.length?<div className="card panel"><div className="quick-list">{timeline.map(item=><div className="quick-item" key={item.id}><div className="quick-left"><span className="quick-icon">{item.kind==="achievement"?<Trophy size={16}/>:item.kind==="gain"?<TrendingUp size={16}/>:item.kind==="spend"?<TrendingDown size={16}/>:<ChartNoAxesCombined size={16}/>}</span><span><strong>{item.title}</strong><small>{item.date} · {item.detail}</small></span></div></div>)}</div></div>:<div className="card empty">아직 기록이 없어요. 기록 페이지에서 첫 기록을 남겨 보세요.</div>}
+ <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:18}}><Link href="/history" className="primary-btn">기록 추가하기</Link><Link href="/analytics" className="secondary-btn">상세 분석 보기</Link></div>
+ </section></div></main>;
+}
