@@ -32,11 +32,20 @@ export function getGoalProgress(goals:CrystalGoal[],balance:number):GoalProgress
     return {goal,allocated,remaining,percent:target>0?Math.min(100,Math.round(allocated/target*100)):100,completed:remaining===0};
   });
 }
+/** Remove duplicate achievement records for the same goal. */
+export function getUniqueAchievements(achievements:GoalAchievement[]):GoalAchievement[] {
+  const unique=new Map<string,GoalAchievement>();
+  for(const achievement of achievements) {
+    if(!unique.has(achievement.goal_id)) unique.set(achievement.goal_id,achievement);
+  }
+  return [...unique.values()];
+}
 /** Persist each goal completion once, so it remains in the achievement log permanently. */
 export function recordCompletedGoals(data:RimiinData):RimiinData {
   const latest=[...data.entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0];
   const balance=latest?.balance??0;
   const progress=getGoalProgress(data.goals,balance);
+  data.achievements=getUniqueAchievements(data.achievements);
   const known=new Set(data.achievements.map(a=>a.goal_id));
   const achievedDate=latest?.entry_date??new Date().toLocaleDateString("en-CA");
   const newlyAchieved=progress.filter(p=>p.completed&&!known.has(p.goal.id)).map(p=>({
