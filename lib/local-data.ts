@@ -3,16 +3,16 @@ export type CrystalTransaction = { id:string; transaction_date:string; kind:"gai
 export type CrystalGoal = { id:string; card_name:string; target_amount:number; deadline:string|null; priority:number; memo:string };
 export type GoalAchievement = { id:string; goal_id:string; goal_name:string; target_amount:number; achieved_date:string };
 export type GoalProgress = { goal:CrystalGoal; allocated:number; remaining:number; percent:number; completed:boolean };
-export type RimiinData = { entries:CrystalEntry[]; transactions:CrystalTransaction[]; goals:CrystalGoal[]; achievements:GoalAchievement[] };
+export type RimiinData = { entries:CrystalEntry[]; transactions:CrystalTransaction[]; goals:CrystalGoal[]; achievements:GoalAchievement[]; home_goal_id:string|null };
 const KEY="rimiin-data-v1";
-const EMPTY:RimiinData={entries:[],transactions:[],goals:[],achievements:[]};
+const EMPTY:RimiinData={entries:[],transactions:[],goals:[],achievements:[],home_goal_id:null};
 export function readData():RimiinData {
   if(typeof window==="undefined") return EMPTY;
   try {
     const raw=window.localStorage.getItem(KEY);
     if(!raw) return EMPTY;
     const parsed=JSON.parse(raw) as Partial<RimiinData>;
-    return {entries:Array.isArray(parsed.entries)?parsed.entries:[],transactions:Array.isArray(parsed.transactions)?parsed.transactions:[],goals:Array.isArray(parsed.goals)?parsed.goals:[],achievements:Array.isArray(parsed.achievements)?parsed.achievements:[]};
+    return {entries:Array.isArray(parsed.entries)?parsed.entries:[],transactions:Array.isArray(parsed.transactions)?parsed.transactions:[],goals:Array.isArray(parsed.goals)?parsed.goals:[],achievements:Array.isArray(parsed.achievements)?parsed.achievements:[],home_goal_id:typeof parsed.home_goal_id==="string"?parsed.home_goal_id:null};
   } catch { return EMPTY; }
 }
 export function writeData(data:RimiinData):void {
