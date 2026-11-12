@@ -21,6 +21,16 @@ export function writeData(data:RimiinData):void {
 export function makeId():string {
   return typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():String(Date.now())+"-"+Math.random().toString(36).slice(2);
 }
+/** Latest balance snapshot plus all gain/spend records dated on or after that snapshot. */
+export function getCurrentBalance(data:RimiinData):number {
+  const latest=[...data.entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0];
+  const baseline=latest?.balance??0;
+  const baselineDate=latest?.entry_date??"0000-00-00";
+  const netAfterBaseline=data.transactions
+    .filter(t=>t.transaction_date>=baselineDate)
+    .reduce((sum,t)=>sum+(t.kind==="gain"?t.amount:-t.amount),0);
+  return Math.max(0,baseline+netAfterBaseline);
+}
 /** Allocate the current crystal balance to goals in priority order, without double-counting. */
 export function getGoalProgress(goals:CrystalGoal[],balance:number):GoalProgress[] {
   let unallocated=Math.max(0,Math.floor(balance));
@@ -42,11 +52,11 @@ export function getUniqueAchievements(achievements:GoalAchievement[]):GoalAchiev
 }
 /** Persist each goal completion once, so it remains in the achievement log permanently. */
 export function recordCompletedGoals(data:RimiinData):RimiinData {
-  const latest=[...data.entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0];
-  const balance=latest?.balance??0;
+  const balance=getCurrentBalance(data);
   const progress=getGoalProgress(data.goals,balance);
   data.achievements=getUniqueAchievements(data.achievements);
   const known=new Set(data.achievements.map(a=>a.goal_id));
+  const latest=[...data.entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0];
   const achievedDate=latest?.entry_date??new Date().toLocaleDateString("en-CA");
   const newlyAchieved=progress.filter(p=>p.completed&&!known.has(p.goal.id)).map(p=>({
     id:makeId(),goal_id:p.goal.id,goal_name:p.goal.card_name,target_amount:p.goal.target_amount,achieved_date:achievedDate
