@@ -19,7 +19,7 @@ export default function HomePage(){
  <section className="hero"><div className="hero-kicker">YOUR FUTURE, YOUR CRYSTALS</div><h1>미래의 나를 위해,<br/>오늘의 크리스탈을 기록해.</h1><p>차곡차곡 모으고, 목표를 세우고,<br/>원하는 미래시를 준비해 보세요.</p><div className="hero-crystal">✧</div></section>
  <div className="notice" style={{marginTop:14}}><Sparkles size={17}/><span>로그인 없이 바로 사용해요. 기록은 현재 사용 중인 브라우저에 저장됩니다.</span></div>
  <div className="grid stats">
- <section className="card stat"><div className="stat-icon" style={{background:"#eee8ff",color:"#8a70d1"}}><Gem size={16}/></div><div className="stat-label">현재 보유 크리스탈</div><div className="stat-value">{number(balance)} 💎</div><div className="stat-foot">가장 최근 보유량 기록 기준</div></section>
+ <section className="card stat"><div className="stat-icon" style={{background:"#eee8ff",color:"#8a70d1"}}><Gem size={16}/></div><div className="stat-label">누적 크리스탈</div><div className="stat-value">{number(balance)} 💎</div><div className="stat-foot">현재 보유량 · 가장 최근 기록 기준</div></section>
  <section className="card stat"><div className="stat-icon" style={{background:"#ffeaf2",color:"#d98bab"}}><Target size={16}/></div><div className="stat-label">전체 목표 달성률</div><div className="stat-value">{totalPercent}%</div><div className="stat-foot">{number(totalRemaining)}개 더 모으면 모든 목표 달성</div></section>
  <section className="card stat"><div className="stat-icon" style={{background:"#e5f4ff",color:"#6d9ed2"}}><CalendarDays size={16}/></div><div className="stat-label">전체 목표 예상</div><div className="stat-value">{eta===null?"기록 필요":eta+"일 후"}</div><div className="stat-foot">{daily>0?"일평균 순증가 "+number(Math.round(daily))+"개":"기록이 쌓이면 예상일을 계산해요"}</div></section>
  </div>
