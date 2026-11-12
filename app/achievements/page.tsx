@@ -2,13 +2,13 @@
 import Link from "next/link";
 import {useEffect,useMemo,useState} from "react";
 import {CalendarDays,ChartNoAxesCombined,Gem,Trophy,TrendingDown,TrendingUp} from "lucide-react";
-import {getGoalProgress,getUniqueAchievements,readData,writeData,recordCompletedGoals,type GoalAchievement,type CrystalEntry,type CrystalTransaction,type CrystalGoal} from "@/lib/local-data";
+import {getCurrentBalance,getGoalProgress,getUniqueAchievements,readData,writeData,recordCompletedGoals,type GoalAchievement,type CrystalEntry,type CrystalTransaction,type CrystalGoal} from "@/lib/local-data";
 const fmt=(n:number)=>new Intl.NumberFormat("ko-KR").format(n);
 type TimelineItem={id:string;date:string;title:string;detail:string;kind:"achievement"|"gain"|"spend"|"balance"};
 export default function AchievementsPage(){
  const [achievements,setAchievements]=useState<GoalAchievement[]>([]);const [entries,setEntries]=useState<CrystalEntry[]>([]);const [transactions,setTransactions]=useState<CrystalTransaction[]>([]);const [goals,setGoals]=useState<CrystalGoal[]>([]);
  useEffect(()=>{const d=recordCompletedGoals(readData());writeData(d);setAchievements(getUniqueAchievements(d.achievements));setEntries(d.entries);setTransactions(d.transactions);setGoals(d.goals);},[]);
- const totals=useMemo(()=>({gained:transactions.filter(t=>t.kind==="gain").reduce((s,t)=>s+t.amount,0)+([...entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0]?.balance??0),spent:transactions.filter(t=>t.kind==="spend").reduce((s,t)=>s+t.amount,0),balance:[...entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0]?.balance??0}),[transactions,entries]);
+ const totals=useMemo(()=>({gained:transactions.filter(t=>t.kind==="gain").reduce((s,t)=>s+t.amount,0)+([...entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0]?.balance??0),spent:transactions.filter(t=>t.kind==="spend").reduce((s,t)=>s+t.amount,0),balance:getCurrentBalance({entries,transactions,goals,achievements,home_goal_id:null})}),[transactions,entries]);
  const progress=getGoalProgress(goals,totals.balance);const target=goals.reduce((s,g)=>s+g.target_amount,0);const allocated=progress.reduce((s,p)=>s+p.allocated,0);const percent=target>0?Math.round(allocated/target*100):0;
  const timeline:TimelineItem[]=[
  ...achievements.map(a=>({id:"a-"+a.id,date:a.achieved_date,title:"목표 달성: "+a.goal_name,detail:fmt(a.target_amount)+" 크리스탈 목표를 달성했어요!",kind:"achievement" as const})),
