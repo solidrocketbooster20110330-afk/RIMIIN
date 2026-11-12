@@ -2,12 +2,12 @@
 import Link from "next/link";
 import {useEffect,useState} from "react";
 import {ArrowUp,ArrowDown,Gem,House,Target,Trash2,Trophy} from "lucide-react";
-import {readData,writeData,makeId,recordCompletedGoals,getGoalProgress,type CrystalGoal} from "@/lib/local-data";
+import {readData,writeData,makeId,recordCompletedGoals,getCurrentBalance,getGoalProgress,type CrystalGoal} from "@/lib/local-data";
 const fmt=(n:number)=>new Intl.NumberFormat("ko-KR").format(n);
 const dday=(date:string|null)=>{if(!date)return null;const now=new Date();const days=Math.round((Date.parse(date+"T00:00:00Z")-Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()))/86400000);return days===0?"D-DAY":days>0?"D-"+days:"D+"+Math.abs(days);};
 export default function GoalsPage(){
  const [goals,setGoals]=useState<CrystalGoal[]>([]);const [balance,setBalance]=useState(0);const [homeGoalId,setHomeGoalId]=useState<string|null>(null);const [name,setName]=useState("");const [target,setTarget]=useState("60000");const [deadline,setDeadline]=useState("");const [memo,setMemo]=useState("");const [message,setMessage]=useState("");const [editingId,setEditingId]=useState<string|null>(null);const [editName,setEditName]=useState("");
- useEffect(()=>{const d=readData();setGoals(d.goals);setHomeGoalId(d.home_goal_id);const latest=[...d.entries].sort((a,b)=>b.entry_date.localeCompare(a.entry_date))[0];setBalance(latest?.balance??0);},[]);
+ useEffect(()=>{const d=readData();setGoals(d.goals);setHomeGoalId(d.home_goal_id);setBalance(getCurrentBalance(d));},[]);
  const progressItems=getGoalProgress(goals,balance);
  const totalTarget=goals.reduce((sum,g)=>sum+Math.max(0,g.target_amount),0);
  const totalAllocated=progressItems.reduce((sum,p)=>sum+p.allocated,0);
